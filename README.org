@@ -1,0 +1,11 @@
+* ARM Cross-Compiler
+This repository contains scripts to build the ARM cross compiler.
+
+* Building
+By default the cross compiler will be install to cross/bin. You can
+override this by setting your own path in the PREFIX environment
+variable.
+
+#+BEGIN_SRC
+make
+#+END_SRC
