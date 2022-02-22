@@ -1,7 +1,7 @@
 include config.mk
 
 
-all: download unpack configure build install
+all: download unpack configure build-binutils install-binutils build-gcc install-gcc build-newlib install-newlib build-gcc install-gcc build-libstdc++ install-libstdc++
 
 
 
@@ -10,13 +10,18 @@ ${BUILD_PATH}/gcc-${GCC_VERSION}.tar.gz:
 	wget -P ${BUILD_PATH} ${SRC_URL}/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz
 
 ${BUILD_PATH}/binutils-${BINUTILS_VERSION}.tar.gz:
-	wget -P ${BUILD_PATH} ${SRC_URL}/binutils/binutils-${BINUTILS_VERSION}.tar.gz 
+	wget -P ${BUILD_PATH} ${SRC_URL}/binutils/binutils-${BINUTILS_VERSION}.tar.gz
+
+${BUILD_PATH}/newlib-cygwin:
+	git clone git://sourceware.org/git/newlib-cygwin.git ${BUILD_PATH}/newlib-cygwin
 
 download-gcc: ${BUILD_PATH}/gcc-${GCC_VERSION}.tar.gz
 
 download-binutils: ${BUILD_PATH}/binutils-${BINUTILS_VERSION}.tar.gz
 
-download: download-gcc download-binutils
+download-newlib: ${BUILD_PATH}/newlib-cygwin
+
+download: download-gcc download-binutils download-newlib
 
 
 
@@ -26,6 +31,8 @@ ${BUILD_PATH}/binutils-${BINUTILS_VERSION}:
 
 ${BUILD_PATH}/gcc-${GCC_VERSION}:
 	tar -xf $@.tar.gz -C ${BUILD_PATH}
+	cd $@; \
+	./contrib/download_prerequisites
 
 unpack-gcc: ${BUILD_PATH}/gcc-${GCC_VERSION}
 
@@ -37,45 +44,69 @@ unpack: download unpack-gcc unpack-binutils
 
 
 ${BUILD_PATH}/gcc-${GCC_VERSION}/Makefile:
-	cd ${BUILD_PATH}/gcc-${GCC_VERSION}/; \
-	./contrib/download_prerequisites; \
-	./configure ${GCC_CONFIGURE_OPTIONS}
+	mkdir ${BUILD_PATH}/gcc-build
+	cd ${BUILD_PATH}/gcc-build; \
+	../gcc-${GCC_VERSION}/configure ${GCC_CONFIGURE_OPTIONS}
 
 ${BUILD_PATH}/binutils-${BINUTILS_VERSION}/Makefile:
-	cd ${BUILD_PATH}/binutils-${BINUTILS_VERSION}; \
-	./configure ${BINUTILS_CONFIGURE_OPTIONS}
+	mkdir ${BUILD_PATH}/binutils-build
+	cd ${BUILD_PATH}/binutils-build; \
+	../binutils-${BINUTILS_VERSION}/configure ${BINUTILS_CONFIGURE_OPTIONS}
+
+${BUILD_PATH}/newlib-build/Makefile:
+	mkdir ${BUILD_PATH}/newlib-build
+	cd ${BUILD_PATH}/newlib-build; \
+	../newlib-cygwin/configure ${NEWLIB_CONFIGURE_OPTIONS}
 
 configure-gcc: ${BUILD_PATH}/gcc-${GCC_VERSION}/Makefile
 
 configure-binutils: ${BUILD_PATH}/binutils-${BINUTILS_VERSION}/Makefile
 
-configure: unpack configure-gcc configure-binutils
+configure-newlib: ${BUILD_PATH}/newlib-build/Makefile
+
+configure: unpack configure-gcc configure-binutils configure-newlib
 
 
 
 
 build-gcc:
-	cd ${BUILD_PATH}/gcc-${GCC_VERSION}; \
-	make ${MAKE_OPTIONS} all-gcc
+	cd ${BUILD_PATH}/gcc-build; \
+	make $(MAKE_OPTIONS) all-gcc; \
+	make $(MAKE_OPTIONS) all-target-libgcc
+
+build-libstdc++:
+	cd ${BUILD_PATH}/gcc-build; \
+	make $(MAKE_OPTIONS) all-target-libstdc++-v3
 
 build-binutils:
-	cd ${BUILD_PATH}/binutils-${BINUTILS_VERSION}; \
-	make ${MAKE_OPTIONS}
+	$(MAKE) $(MAKE_OPTIONS) -C ${BUILD_PATH}/binutils-build
 
-build: configure build-gcc build-binutils
+build-newlib:
+	cd ${BUILD_PATH}/newlib-build; \
+	make $(MAKE_OPTIONS)
+
+build: configure build-gcc build-binutils build-newlib
 
 
 
 
 install-gcc:
-	cd ${BUILD_PATH}/gcc-${GCC_VERSION}; \
-	make install-gcc
+	cd ${BUILD_PATH}/gcc-build; \
+	make install-gcc; \
+	make install-target-libgcc
+
+install-libstdc++:
+	cd ${BUILD_PATH}/gcc-build; \
+	make install-target-libstdc++-v3
 
 install-binutils:
-	cd ${BUILD_PATH}/binutils-${BINUTILS_VERSION}; \
+	$(MAKE) -C ${BUILD_PATH}/binutils-build install
+
+install-newlib:
+	cd $(BUILD_PATH)/newlib-build; \
 	make install
 
-install: install-gcc install-binutils
+install: install-gcc install-binutils install-newlib
 
 
 clean:
