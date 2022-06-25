@@ -4,14 +4,16 @@ GCC_VERSION = 11.1.0
 
 BUILD_PATH = ${PWD}/build
 
-TARGET = arm-none-eabi
-PREFIX = ${PWD}/cross
+TARGET ?= arm-none-eabi
+PREFIX ?= ${PWD}/cross
 export PATH := $(PREFIX)/bin:$(PATH)
 
-BINUTILS_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX} --with-newlib --with-sysroot=${PREFIX}/arm-none-eabi --disable-nls
+BINUTILS_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX} --with-newlib --with-sysroot=${PREFIX}/${TARGET} --disable-nls
 
-GCC_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX} --with-sysroot=${PREFIX}/arm-none-eabi --with-newlib --disable-nls --without-headers --enable-languages=c,c++ --disable-libstdcxx-pch
+GCC_BOOTSTRAP_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX} --with-sysroot=${PREFIX}/${TARGET} --without-headers --with-newlib --disable-nls --enable-languages=c,c++ --enable-libstdcxx-pch
 
-NEWLIB_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX} --disable-libgloss
+GCC_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX} --with-sysroot=${PREFIX}/${TARGET} --with-newlib --disable-nls --enable-languages=c,c++ --enable-libstdcxx-pch --with-newlib
+
+NEWLIB_CONFIGURE_OPTIONS = --host=x86_64-pc-linux-gnu --target=${TARGET} --prefix=${PREFIX}
 
 MAKE_OPTIONS ?= -j$(shell nproc)
