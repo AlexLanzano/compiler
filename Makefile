@@ -6,29 +6,31 @@ __check_defined = \
     $(if $(value $1),, \
       $(error Please define $1$(if $2, ($2))))
 
+patch = $(shell for i in $1/*.patch; do patch -d $2 -t -p1 < $i; done )
+
 $(call check_defined, TARGET, cross compiler target architecture)
 
 $(call check_defined, PREFIX, Directory where the compiler will be installed)
 
 include config.mk
 
-all: download unpack binutils gcc-bootstrap newlib gcc libstdc++ clean
-all-without-newlib: download unpack binutils gcc clean
+all: download unpack patch binutils gcc-bootstrap newlib gcc libstdc++ clean
+all-without-newlib: download unpack patch binutils gcc clean
 
 binutils: configure-binutils build-binutils install-binutils
-gcc-bootstrap: configure-gcc-bootstrap build-gcc-bootstrap install-gcc-bootstrap
-newlib: configure-newlib build-newlib install-newlib
-gcc: configure-gcc build-gcc install-gcc
-libstdc++: build-libstdc++ install-libstdc++
+gcc-bootstrap: binutils configure-gcc-bootstrap build-gcc-bootstrap install-gcc-bootstrap
+newlib: gcc-bootstrap configure-newlib build-newlib install-newlib
+gcc: newlib configure-gcc build-gcc install-gcc
+libstdc++: gcc build-libstdc++ install-libstdc++
 
 
 
 
 $(BUILD_PATH)/gcc-$(GCC_VERSION).tar.gz:
-	wget -P $(BUILD_PATH) $(SRC_URL)/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.gz
+	wget --no-check-certificate -P $(BUILD_PATH) $(SRC_URL)/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.gz
 
 $(BUILD_PATH)/binutils-$(BINUTILS_VERSION).tar.gz:
-	wget -P $(BUILD_PATH) $(SRC_URL)/binutils/binutils-$(BINUTILS_VERSION).tar.gz
+	wget --no-check-certificate -P $(BUILD_PATH) $(SRC_URL)/binutils/binutils-$(BINUTILS_VERSION).tar.gz
 
 $(BUILD_PATH)/newlib-cygwin:
 	git clone git://sourceware.org/git/newlib-cygwin.git $(BUILD_PATH)/newlib-cygwin
@@ -57,6 +59,31 @@ unpack-gcc: $(BUILD_PATH)/gcc-$(GCC_VERSION)
 unpack-binutils: $(BUILD_PATH)/binutils-$(BINUTILS_VERSION)
 
 unpack: download unpack-gcc unpack-binutils
+
+
+
+
+patch: unpack patch-binutils patch-gcc
+
+ifdef GCC_PATCH_FILE_PATH
+patch-gcc: $(BUILD_PATH)/gcc-$(GCC_VERSION)/patched
+else
+patch-gcc:
+endif
+
+ifdef BINUTILS_PATCH_FILE_PATH
+patch-binutils: $(BUILD_PATH)/binutils-$(BINUTILS_VERSION)/patched
+else
+patch-binutils:
+endif
+
+$(BUILD_PATH)/gcc-$(GCC_VERSION)/patched:
+	./patch.sh $(GCC_PATCH_FILE_PATH) $(BUILD_PATH)/gcc-$(GCC_VERSION)
+	touch $@
+
+$(BUILD_PATH)/binutils-$(BINUTILS_VERSION)/patched: $(BUILD_PATH)/binutils-$(BINUTILS_VERSION)/patched
+	./patch.sh $(BINUTILS_PATCH_FILE_PATH) $(BUILD_PATH)/binutils-$(BINUTILS_VERSION)
+	touch $@
 
 
 
