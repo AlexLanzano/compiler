@@ -12,15 +12,17 @@ $(call check_defined, TARGET, cross compiler target architecture)
 
 $(call check_defined, PREFIX, Directory where the compiler will be installed)
 
-include config.mk
+include $(CONFIG)
 
 all: download unpack patch binutils gcc-bootstrap newlib gcc libstdc++ clean
 all-without-newlib: download unpack patch binutils gcc clean
+all-linux: download unpack patch binutils gcc-linux clean
 
 binutils: configure-binutils build-binutils install-binutils
 gcc-bootstrap: binutils configure-gcc-bootstrap build-gcc-bootstrap install-gcc-bootstrap
 newlib: gcc-bootstrap configure-newlib build-newlib install-newlib
 gcc: newlib configure-gcc build-gcc install-gcc
+gcc-linux: configure-gcc build-gcc-linux install-gcc-linux
 libstdc++: gcc build-libstdc++ install-libstdc++
 
 
@@ -128,6 +130,11 @@ build-gcc:
 	make $(MAKE_OPTIONS) all-target-newlib; \
 	make $(MAKE_OPTIONS) all-target-libgloss
 
+build-gcc-linux:
+	cd $(BUILD_PATH)/gcc-build; \
+	make $(MAKE_OPTIONS) all-gcc; \
+	make $(MAKE_OPTIONS) all-target-libgcc
+
 build-libstdc++:
 	cd $(BUILD_PATH)/gcc-build; \
 	make $(MAKE_OPTIONS) all-target-libstdc++-v3
@@ -153,6 +160,11 @@ install-gcc:
 	make install-target-libgcc; \
 	make install-target-newlib; \
 	make install-target-libgloss
+
+install-gcc-linux:
+	cd $(BUILD_PATH)/gcc-build; \
+	make install-gcc; \
+	make install-target-libgcc
 
 install-libstdc++:
 	cd $(BUILD_PATH)/gcc-build; \
