@@ -8,15 +8,19 @@ __check_defined = \
 
 patch = $(shell for i in $1/*.patch; do patch -d $2 -t -p1 < $i; done )
 
+$(call check_defined, CONFIG)
+
 include $(CONFIG)
 
 $(call check_defined, TARGET, cross compiler target architecture)
 
 $(call check_defined, PREFIX, Directory where the compiler will be installed)
 
-all: download unpack patch binutils gcc-bootstrap newlib gcc libstdc++ clean
-all-without-newlib: download unpack patch binutils gcc clean
-all-linux: download unpack patch binutils gcc-linux clean
+all: download unpack patch $(BUILD_TARGETS)
+
+#all: download unpack patch binutils gcc-bootstrap newlib gcc libstdc++ clean
+#all-without-newlib: download unpack patch binutils gcc clean
+#all-linux: download unpack patch binutils gcc-linux clean
 
 binutils: configure-binutils build-binutils install-binutils
 gcc-bootstrap: binutils configure-gcc-bootstrap build-gcc-bootstrap install-gcc-bootstrap
