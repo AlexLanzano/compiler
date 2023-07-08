@@ -6,6 +6,8 @@ __check_defined = \
     $(if $(value $1),, \
       $(error Please define $1$(if $2, ($2))))
 
+MAKE_OPTIONS = -j$(shell nproc)
+
 patch = $(shell for i in $1/*.patch; do patch -d $2 -t -p1 < $i; done )
 
 $(call check_defined, CONFIG)
@@ -23,11 +25,11 @@ all: download unpack patch $(BUILD_TARGETS)
 #all-linux: download unpack patch binutils gcc-linux clean
 
 binutils: configure-binutils build-binutils install-binutils
-gcc-bootstrap: binutils configure-gcc-bootstrap build-gcc-bootstrap install-gcc-bootstrap
-newlib: gcc-bootstrap configure-newlib build-newlib install-newlib
-gcc: newlib configure-gcc build-gcc install-gcc
+gcc-bootstrap: configure-gcc-bootstrap build-gcc-bootstrap install-gcc-bootstrap
+newlib: configure-newlib build-newlib install-newlib
+gcc: configure-gcc build-gcc install-gcc
 gcc-linux: configure-gcc build-gcc-linux install-gcc-linux
-libstdc++: gcc build-libstdc++ install-libstdc++
+libstdc++: build-libstdc++ install-libstdc++
 
 
 
