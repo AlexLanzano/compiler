@@ -12,8 +12,6 @@ BINUTILS_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX} --with-sysroo
 
 GCC_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX} --with-sysroot=${PREFIX}/${TARGET} --with-newlib --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-shared --disable-decimal-float --disable-threads --disable-libmudflap --disable-libssp --disable-libgomp --disable-quadmath --disable-libatomic --disable-libmpx --disable-libcc1 ${ADDITIONAL_GCC_CONFIGURE_OPTIONS}
 
-NEWLIB_CONFIGURE_OPTIONS = --target=${TARGET} --prefix=${PREFIX}
-
 MAKE_OPTIONS ?= -j$(shell nproc)
 
 BUILD_TARGETS = binutils gcc-linux clean

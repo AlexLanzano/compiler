@@ -20,9 +20,6 @@ $(call check_defined, PREFIX, Directory where the compiler will be installed)
 
 all: download unpack patch $(BUILD_TARGETS)
 
-#all: download unpack patch binutils gcc-bootstrap newlib gcc libstdc++ clean
-#all-without-newlib: download unpack patch binutils gcc clean
-#all-linux: download unpack patch binutils gcc-linux clean
 
 binutils: configure-binutils build-binutils install-binutils
 gcc-bootstrap: configure-gcc-bootstrap build-gcc-bootstrap install-gcc-bootstrap
@@ -96,10 +93,15 @@ $(BUILD_PATH)/binutils-$(BINUTILS_VERSION)/patched: $(BUILD_PATH)/binutils-$(BIN
 
 
 
+$(BUILD_PATH)/gcc-bootstrap-build/Makefile:
+	mkdir $(BUILD_PATH)/gcc-bootstrap-build
+	cd $(BUILD_PATH)/gcc-bootstrap-build; \
+	../gcc-$(GCC_VERSION)/configure $(GCC_BOOTSTRAP_CONFIGURE_OPTIONS)
+
 $(BUILD_PATH)/gcc-build/Makefile:
 	mkdir $(BUILD_PATH)/gcc-build
 	cd $(BUILD_PATH)/gcc-build; \
-	../gcc-$(GCC_VERSION)/configure $(GCC_BOOTSTRAP_CONFIGURE_OPTIONS)
+	../gcc-$(GCC_VERSION)/configure $(GCC_CONFIGURE_OPTIONS)
 
 $(BUILD_PATH)/binutils-build/Makefile:
 	mkdir $(BUILD_PATH)/binutils-build
@@ -111,12 +113,9 @@ $(BUILD_PATH)/newlib-build/Makefile:
 	cd $(BUILD_PATH)/newlib-build; \
 	../newlib-cygwin/configure $(NEWLIB_CONFIGURE_OPTIONS)
 
-configure-gcc-bootstrap: $(BUILD_PATH)/gcc-build/Makefile
+configure-gcc-bootstrap: $(BUILD_PATH)/gcc-bootstrap-build/Makefile
 
-configure-gcc:
-	mkdir -p $(BUILD_PATH)/gcc-build
-	cd $(BUILD_PATH)/gcc-build; \
-	../gcc-$(GCC_VERSION)/configure $(GCC_CONFIGURE_OPTIONS)
+configure-gcc: $(BUILD_PATH)/gcc-build/Makefile
 
 configure-binutils: $(BUILD_PATH)/binutils-build/Makefile
 
@@ -125,16 +124,13 @@ configure-newlib: $(BUILD_PATH)/newlib-build/Makefile
 
 
 build-gcc-bootstrap:
-	cd $(BUILD_PATH)/gcc-build; \
+	cd $(BUILD_PATH)/gcc-bootstrap-build; \
 	make $(MAKE_OPTIONS) all-gcc; \
 	make $(MAKE_OPTIONS) all-target-libgcc
 
 build-gcc:
 	cd $(BUILD_PATH)/gcc-build; \
-	make $(MAKE_OPTIONS) all-gcc; \
-	make $(MAKE_OPTIONS) all-target-libgcc; \
-	make $(MAKE_OPTIONS) all-target-newlib; \
-	make $(MAKE_OPTIONS) all-target-libgloss
+	make $(MAKE_OPTIONS)
 
 build-gcc-linux:
 	cd $(BUILD_PATH)/gcc-build; \
@@ -146,7 +142,8 @@ build-libstdc++:
 	make $(MAKE_OPTIONS) all-target-libstdc++-v3
 
 build-binutils:
-	$(MAKE) $(MAKE_OPTIONS) -C $(BUILD_PATH)/binutils-build
+	cd $(BUILD_PATH)/binutils-build; \
+	make $(MAKE_OPTIONS)
 
 build-newlib:
 	cd $(BUILD_PATH)/newlib-build; \
@@ -156,16 +153,13 @@ build-newlib:
 
 
 install-gcc-bootstrap:
-	cd $(BUILD_PATH)/gcc-build; \
+	cd $(BUILD_PATH)/gcc-bootstrap-build; \
 	make install-gcc; \
 	make install-target-libgcc
 
 install-gcc:
 	cd $(BUILD_PATH)/gcc-build; \
-	make install-gcc; \
-	make install-target-libgcc; \
-	make install-target-newlib; \
-	make install-target-libgloss
+	make install
 
 install-gcc-linux:
 	cd $(BUILD_PATH)/gcc-build; \
